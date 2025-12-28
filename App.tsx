@@ -1,14 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { FileUploader } from './components/FileUploader';
 import { FileViewer } from './components/FileViewer';
 import { Dashboard } from './components/Dashboard';
+import { Login } from './components/Login';
 import { SharedFile } from './types';
 
 const App: React.FC = () => {
   const [files, setFiles] = useState<Record<string, SharedFile>>({});
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('admin_auth') === 'true';
+  });
 
   // Initialize from localStorage for persistence in demo
   useEffect(() => {
@@ -23,7 +27,6 @@ const App: React.FC = () => {
   }, []);
 
   const persistMetadata = (updatedFiles: Record<string, SharedFile>) => {
-    // Note: We don't save the full dataUrl to localStorage to avoid QuotaExceededError
     const metadataOnly: Record<string, SharedFile> = {};
     Object.keys(updatedFiles).forEach(id => {
       const f = updatedFiles[id];
@@ -47,7 +50,7 @@ const App: React.FC = () => {
     setFiles(prev => {
       const updated = {
         ...prev,
-        [id]: { ...prev[id], downloadCount: prev[id].downloadCount + 1 }
+        [id]: { ...prev[id], downloadCount: (prev[id].downloadCount || 0) + 1 }
       };
       persistMetadata(updated);
       return updated;
@@ -64,9 +67,19 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    sessionStorage.setItem('admin_auth', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('admin_auth');
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route 
@@ -78,8 +91,12 @@ const App: React.FC = () => {
             element={<FileViewer files={files} onDownload={incrementDownload} />} 
           />
           <Route 
+            path="/login" 
+            element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} 
+          />
+          <Route 
             path="/dashboard" 
-            element={<Dashboard files={files} onDelete={deleteFile} />} 
+            element={isAuthenticated ? <Dashboard files={files} onDelete={deleteFile} /> : <Navigate to="/login" />} 
           />
           <Route 
             path="*" 
@@ -97,8 +114,13 @@ const App: React.FC = () => {
           />
         </Routes>
       </main>
-      <footer className="bg-white border-t py-6 text-center text-slate-500 text-sm">
-        <p>© {new Date().getFullYear()} سحابة شارك - حلول ذكية لمشاركة الملفات</p>
+      <footer className="bg-white border-t py-8 mt-12">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-slate-500 text-sm mb-4">© {new Date().getFullYear()} سحابة شارك - حلول ذكية لمشاركة الملفات</p>
+          <div className="flex justify-center items-center gap-4 text-xs text-slate-300">
+            <a href="#/login" className="hover:text-blue-400 transition-colors">دخول الإدارة</a>
+          </div>
+        </div>
       </footer>
     </div>
   );

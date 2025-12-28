@@ -1,9 +1,14 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Cloud, Upload, LayoutDashboard } from 'lucide-react';
+import { Cloud, Upload, LayoutDashboard, LogOut } from 'lucide-react';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  isAuthenticated: boolean;
+  onLogout: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, onLogout }) => {
   const location = useLocation();
   
   return (
@@ -16,28 +21,40 @@ export const Navbar: React.FC = () => {
           <span className="text-xl font-bold tracking-tight text-slate-800">سحابة شارك</span>
         </Link>
         <div className="flex items-center gap-2 md:gap-4">
-          <Link 
-            to="/dashboard" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
-              location.pathname === '/dashboard' 
-              ? 'bg-slate-100 text-blue-600' 
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span className="hidden md:inline">لوحة التحكم</span>
-          </Link>
-          <Link 
-            to="/" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-bold ${
-              location.pathname === '/' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' 
-              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-            }`}
-          >
-            <Upload className="w-4 h-4" />
-            <span>رفع ملف</span>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to="/dashboard" 
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  location.pathname === '/dashboard' 
+                  ? 'bg-blue-50 text-blue-600' 
+                  : 'text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden md:inline">لوحة التحكم</span>
+              </Link>
+              <button 
+                onClick={onLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-red-500 hover:bg-red-50 transition-all font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline">خروج</span>
+              </button>
+            </>
+          ) : (
+            <Link 
+              to="/" 
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all font-bold ${
+                location.pathname === '/' 
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' 
+                : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              <span>رفع ملف</span>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
